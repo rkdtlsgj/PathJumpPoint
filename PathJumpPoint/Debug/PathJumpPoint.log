@@ -1,0 +1,7 @@
+﻿  JumpPoint.cpp
+C:\Users\rkdtl\source\repos\PathJumpPoint\PathJumpPoint\JumpPoint.cpp(430,14): warning C4244: '초기화 중': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\rkdtl\source\repos\PathJumpPoint\PathJumpPoint\JumpPoint.cpp(457,22): warning C4244: '=': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\rkdtl\source\repos\PathJumpPoint\PathJumpPoint\JumpPoint.cpp(469,48): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\rkdtl\source\repos\PathJumpPoint\PathJumpPoint\JumpPoint.cpp(676,34): warning C4244: '=': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\rkdtl\source\repos\PathJumpPoint\PathJumpPoint\JumpPoint.cpp(760,6): warning C4102: 'std': 참조되지 않은 레이블입니다.
+  PathJumpPoint.vcxproj -> C:\Users\rkdtl\source\repos\PathJumpPoint\Debug\PathJumpPoint.exe
