@@ -103,8 +103,8 @@ bool JumpPoint::Search(HWND hWnd)
 			return true;
 		}
 
-		color = (rand() % 200) + 10;
-
+		color = RGB((rand() % 200) + 10, (rand() % 200) + 10, (rand() % 200) + 10);
+		
 		if (pSearchNode->pParent == NULL)
 		{
 			CheckNodeDir(pSearchNode->iX - 1, pSearchNode->iY, pSearchNode, DIR_LL);
@@ -270,8 +270,6 @@ void JumpPoint::Draw(HDC hdc)
 	hPenOld = (HPEN)SelectObject(hdc, hNullPen);
 
 
-
-
 	hBrush = CreateSolidBrush(RGB(128, 128, 128));
 	hBrushOld = (HBRUSH)SelectObject(hdc, hBrush);
 
@@ -411,7 +409,7 @@ void JumpPoint::DrawLine(HDC hdc)
 
 		SelectObject(hdc, hPenOld);
 
-		SerachBresenham(m_EndNode);
+		SerachBresenham(m_EndNode,hdc);
 	}
 }
 
@@ -428,26 +426,9 @@ void JumpPoint::CheckNodeDir(int iX, int iY,  NODE* pSearchNode,int iDir)
 			if (Jump(iX, iY, iDir, &iJumpX, &iJumpY) == true)
 			{
 				int newG = pSearchNode->fG + abs(iJumpX - pSearchNode->iX) + abs(iJumpY - pSearchNode->iY);
-				//int newG = pSearchNode->fG + 1;
 
 				list<NODE*>::iterator iter;
 			
-
-			/*	for (iter = m_CloseList.begin(); iter != m_CloseList.end(); ++iter)
-				{
-					if ((*iter)->iX == iX && (*iter)->iY == iY)
-					{
-						if ((*iter)->fG > newG)
-						{
-							(*iter)->fG = newG;
-							(*iter)->fF = newG + (*iter)->fH;
-							(*iter)->pParent = pSearchNode;							
-						}
-
-
-						return;
-					}
-				}*/
 				for (iter = m_OpenList.begin(); iter != m_OpenList.end(); ++iter)
 				{
 					if ((*iter)->iX == iX && (*iter)->iY == iY)
@@ -673,7 +654,7 @@ NODE* JumpPoint::CreateNode(int iX, int iY, float fG, NODE* pParent)
 	newNode->pParent = pParent;
 
 	newNode->fG = fG;
-	newNode->fH = abs(iX - m_iEndX) + abs(iY - m_iEndY);
+	newNode->fH = (abs(iX - m_iEndX) + abs(iY - m_iEndY))*2;
 	newNode->fF = fG + newNode->fH;
 
 	return newNode;
@@ -746,16 +727,17 @@ void JumpPoint::CreateDrag(int iX, int iY)
 	}
 }
 
-void JumpPoint::SerachBresenham(NODE* pEndNode)
+void JumpPoint::SerachBresenham(NODE* pEndNode, HDC hdc)
 {
 	list<stPOINT*> pointList;
-	NODE* pTempNode = pEndNode;
-	NODE* pParentNode = pTempNode->pParent->pParent;
+	NODE* pStartNode = pEndNode;	
+	NODE* pTempNode = pStartNode->pParent;
+	NODE* pParentNode = pStartNode->pParent->pParent;
 	bool isBlock = false;
 	while (pParentNode != NULL)
 	{
 		isBlock = false;
-		cBresenhamLine.SerachBresenhamLine(&pointList, pTempNode->iX, pTempNode->iY, pParentNode->iX, pParentNode->iY);
+		cBresenhamLine.SerachBresenhamLine(&pointList, pStartNode->iX, pStartNode->iY, pParentNode->iX, pParentNode->iY);
 
 		std:list<stPOINT*>::iterator iter;
 		for (iter = pointList.begin(); iter != pointList.end();++iter)
@@ -769,15 +751,35 @@ void JumpPoint::SerachBresenham(NODE* pEndNode)
 
 		if (isBlock == false)
 		{
-			pTempNode->pParent = pTempNode->pParent->pParent;		
+			//pTempNode->pParent = pTempNode->pParent->pParent;		
+			//pParentNode = pParentNode->pParent;
+			pTempNode = pParentNode;
+			pParentNode = pParentNode->pParent;
 		}
 		else
 		{
-			pTempNode = pTempNode->pParent;
-		}
+			HPEN hPenOld;
+			hPenOld = (HPEN)SelectObject(hdc, hPen);
 
-		pParentNode = pTempNode->pParent->pParent;
+			MoveToEx(hdc, (pStartNode->iX * TILE_SIZE + 7) + (TILE_SIZE / 2), (pStartNode->iY * TILE_SIZE) + (TILE_SIZE / 2), NULL);
+			LineTo(hdc, (pTempNode->iX * TILE_SIZE + 7) + (TILE_SIZE / 2), (pTempNode->iY * TILE_SIZE) + (TILE_SIZE / 2));
+			SelectObject(hdc, hPenOld);
+
+			pStartNode = pTempNode;
+			pParentNode = pTempNode->pParent->pParent;
+		}
+		
+		HPEN hPenOld;
+		hPenOld = (HPEN)SelectObject(hdc, hPen);
+
+		MoveToEx(hdc, (pStartNode->iX * TILE_SIZE + 7) + (TILE_SIZE / 2), (pStartNode->iY * TILE_SIZE) + (TILE_SIZE / 2), NULL);
+		LineTo(hdc, (pTempNode->iX * TILE_SIZE + 7) + (TILE_SIZE / 2), (pTempNode->iY * TILE_SIZE) + (TILE_SIZE / 2));
+		SelectObject(hdc, hPenOld);
+
+		
 		pointList.clear();
 	}
+	
+
 }
 

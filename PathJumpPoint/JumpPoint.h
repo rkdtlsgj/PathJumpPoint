@@ -84,7 +84,7 @@ private:
 
 	bool Jump(int iX, int iY, int iDir,int* iJumpX, int* iJumpY);
 
-	void SerachBresenham(NODE* pEndNode);
+	void SerachBresenham(NODE* pEndNode,HDC hdc);
 	BresenhamLine cBresenhamLine;
 
 	TILE_TYPE m_map[MAPSIZE_Y][MAPSIZE_X];
