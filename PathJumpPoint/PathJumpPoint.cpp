@@ -7,6 +7,7 @@
 #include "JumpPoint.h"
 #include "BresenhamLine.h"
 
+#include <time.h>
 #define MAX_LOADSTRING 100
 
 
@@ -60,6 +61,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
+    srand((unsigned)time(NULL));
 
 	MSG msg;
 

@@ -103,7 +103,7 @@ bool JumpPoint::Search(HWND hWnd)
 			return true;
 		}
 
-		color = rand() % 200 + 10;
+		color = (rand() % 200) + 10;
 
 		if (pSearchNode->pParent == NULL)
 		{
