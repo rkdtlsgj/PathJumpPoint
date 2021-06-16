@@ -734,6 +734,11 @@ void JumpPoint::SerachBresenham(NODE* pEndNode, HDC hdc)
 	NODE* pTempNode = pStartNode->pParent;
 	NODE* pParentNode = pStartNode->pParent->pParent;
 	bool isBlock = false;
+
+	HPEN hNewPen = CreatePen(PS_SOLID, 0, RGB(0, 255, 255));
+	HPEN hPenOld;
+	hPenOld = (HPEN)SelectObject(hdc, hNewPen);
+
 	while (pParentNode != NULL)
 	{
 		isBlock = false;
@@ -749,36 +754,33 @@ void JumpPoint::SerachBresenham(NODE* pEndNode, HDC hdc)
 			}
 		}
 
-		if (isBlock == false)
-		{
+		
+		
 			//pTempNode->pParent = pTempNode->pParent->pParent;		
 			//pParentNode = pParentNode->pParent;
-			pTempNode = pParentNode;
-			pParentNode = pParentNode->pParent;
-		}
-		else
+						
+		
+		if (isBlock == true)
 		{
-			HPEN hPenOld;
-			hPenOld = (HPEN)SelectObject(hdc, hPen);
-
 			MoveToEx(hdc, (pStartNode->iX * TILE_SIZE + 7) + (TILE_SIZE / 2), (pStartNode->iY * TILE_SIZE) + (TILE_SIZE / 2), NULL);
 			LineTo(hdc, (pTempNode->iX * TILE_SIZE + 7) + (TILE_SIZE / 2), (pTempNode->iY * TILE_SIZE) + (TILE_SIZE / 2));
-			SelectObject(hdc, hPenOld);
 
 			pStartNode = pTempNode;
-			pParentNode = pTempNode->pParent->pParent;
+			//pParentNode = pTempNode->pParent->pParent;
 		}
+		pTempNode = pParentNode;
+		pParentNode = pParentNode->pParent;
 		
-		HPEN hPenOld;
-		hPenOld = (HPEN)SelectObject(hdc, hPen);
-
-		MoveToEx(hdc, (pStartNode->iX * TILE_SIZE + 7) + (TILE_SIZE / 2), (pStartNode->iY * TILE_SIZE) + (TILE_SIZE / 2), NULL);
-		LineTo(hdc, (pTempNode->iX * TILE_SIZE + 7) + (TILE_SIZE / 2), (pTempNode->iY * TILE_SIZE) + (TILE_SIZE / 2));
-		SelectObject(hdc, hPenOld);
 
 		
 		pointList.clear();
 	}
+
+	MoveToEx(hdc, (pStartNode->iX * TILE_SIZE + 7) + (TILE_SIZE / 2), (pStartNode->iY * TILE_SIZE) + (TILE_SIZE / 2), NULL);
+	LineTo(hdc, (pTempNode->iX * TILE_SIZE + 7) + (TILE_SIZE / 2), (pTempNode->iY * TILE_SIZE) + (TILE_SIZE / 2));
+
+	DeleteObject(hNewPen);
+	SelectObject(hdc, hPenOld);
 	
 
 }
