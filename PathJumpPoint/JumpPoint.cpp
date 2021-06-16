@@ -28,7 +28,7 @@ void JumpPoint::ClearMap()
 	{
 		for (int j = 0; j < MAPSIZE_X; j++)
 		{
-			m_mapColor[i][j] = 255;
+			m_mapColor[i][j] = 0;
 
 			if (m_map[i][j] != BLOCK)
 			{
@@ -103,7 +103,7 @@ bool JumpPoint::Search(HWND hWnd)
 			return true;
 		}
 
-		color = RGB((rand() % 200) + 10, (rand() % 200) + 10, (rand() % 200) + 10);
+		color = RGB(rand() % 200 + 10, rand() % 200 + 10, rand() % 200 + 10);
 		
 		if (pSearchNode->pParent == NULL)
 		{
@@ -291,7 +291,7 @@ void JumpPoint::Draw(HDC hdc)
 	{
 		for (int iX = 0; iX < MAPSIZE_X; iX++)
 		{
-			if (m_mapColor[iY][iX] < 255)
+			if (m_mapColor[iY][iX] > 0)
 			{
 				hBrush = CreateSolidBrush(m_mapColor[iY][iX]);
 				hBrushOld = (HBRUSH)SelectObject(hdc, hBrush);

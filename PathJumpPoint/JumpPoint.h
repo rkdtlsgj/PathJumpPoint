@@ -88,7 +88,7 @@ private:
 	BresenhamLine cBresenhamLine;
 
 	TILE_TYPE m_map[MAPSIZE_Y][MAPSIZE_X];
-	BYTE m_mapColor[MAPSIZE_Y][MAPSIZE_X];
+	COLORREF m_mapColor[MAPSIZE_Y][MAPSIZE_X];
 
 	TILE_TYPE m_SelectBlock;
 
@@ -108,6 +108,6 @@ private:
 	HPEN hPen;
 	HPEN hNullPen;
 
-	BYTE color;
+	DWORD color;
 };
 
