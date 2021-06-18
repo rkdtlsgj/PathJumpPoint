@@ -13,9 +13,10 @@
 
 enum MODE
 {
-   START_END = 0,
-   CREATE_BLOCK,
-   INFO
+	START_END = 0,
+	CREATE_BLOCK,
+	INFO,
+	BRESENHAMLINE
 };
 
 MODE g_eMode;
@@ -26,42 +27,42 @@ HINSTANCE hInst;                                // 현재 인스턴스입니다.
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+	_In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPWSTR    lpCmdLine,
+	_In_ int       nCmdShow)
 {
-    WNDCLASSEXW wcex;
+	WNDCLASSEXW wcex;
 
-    wcex.cbSize = sizeof(WNDCLASSEX);
+	wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc = WndProc;
-    wcex.cbClsExtra = 0;
-    wcex.cbWndExtra = 0;
-    wcex.hInstance = hInstance;
-    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PATHJUMPPOINT));
-    wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wcex.lpszMenuName = NULL;
-    wcex.lpszClassName = L"Graphic";
-    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = WndProc;
+	wcex.cbClsExtra = 0;
+	wcex.cbWndExtra = 0;
+	wcex.hInstance = hInstance;
+	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PATHJUMPPOINT));
+	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wcex.lpszMenuName = NULL;
+	wcex.lpszClassName = L"Graphic";
+	wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
-    RegisterClassExW(&wcex);
+	RegisterClassExW(&wcex);
 
 
-    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
+	hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
-    HWND hWnd = CreateWindowW(L"Graphic", L"Graphic", WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+	HWND hWnd = CreateWindowW(L"Graphic", L"Graphic", WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
-    if (!hWnd)
-    {
-        return FALSE;
-    }
+	if (!hWnd)
+	{
+		return FALSE;
+	}
 
-    ShowWindow(hWnd, nCmdShow);
-    UpdateWindow(hWnd);
-    srand((unsigned)time(NULL));
+	ShowWindow(hWnd, nCmdShow);
+	UpdateWindow(hWnd);
+	srand((unsigned)time(NULL));
 
 	MSG msg;
 
@@ -113,69 +114,80 @@ bool isPlay = false;
 //
 //}
 
+BresenhamLine testLine;
+int g_SiX;
+int g_SiY;
+
+int g_EiX;
+int g_EiY;
+
+HPEN hPen;
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    switch (message)
-    {
+	switch (message)
+	{
 
-    case WM_CREATE:
-    {
-        HDC hdc = GetDC(hWnd);
-        GetClientRect(hWnd, &Rect);
-        g_hMemDC = CreateCompatibleDC(hdc);
-        g_hMemBitmap = CreateCompatibleBitmap(hdc, Rect.right, Rect.bottom);
-        g_hMemBitmapOld = (HBITMAP)SelectObject(g_hMemDC, g_hMemBitmap);
-        g_eMode = MODE::CREATE_BLOCK;
+	case WM_CREATE:
+	{
+		HDC hdc = GetDC(hWnd);
+		GetClientRect(hWnd, &Rect);
+		g_hMemDC = CreateCompatibleDC(hdc);
+		g_hMemBitmap = CreateCompatibleBitmap(hdc, Rect.right, Rect.bottom);
+		g_hMemBitmapOld = (HBITMAP)SelectObject(g_hMemDC, g_hMemBitmap);
+		g_eMode = MODE::CREATE_BLOCK;
+		hPen = CreatePen(PS_SOLID, 0, RGB(255, 0, 255));
+		ReleaseDC(hWnd, hdc);
+	}
+	break;
+	case WM_TIMER:
+		switch (wParam)
+		{
+		case 0:
+			if (g_CJump.Search(hWnd) == true)
+			{
+				KillTimer(hWnd, 0);
+				isPlay = false;
+			}
+			break;
+		}
+		break;
 
-        ReleaseDC(hWnd, hdc);
-    }
-    break;
-    case WM_TIMER:
-        switch (wParam)
-        {
-        case 0:
-            if (g_CJump.Search(hWnd) == true)
-            {
-                KillTimer(hWnd, 0);
-                isPlay = false;
-            }
-            break;
-        }
-        break;
+	case WM_CHAR:
+		if (GetAsyncKeyState(VK_SPACE))
+		{
+			if (isPlay == false)
+			{
+				g_CJump.ClearMap();
+				SetTimer(hWnd, 0, 1000, NULL);
+				isPlay = true;
+			}
+		}
 
-    case WM_CHAR:
-        if (GetAsyncKeyState(VK_SPACE))
-        {
+		if (GetAsyncKeyState(VK_TAB))
+		{
+			switch (g_eMode)
+			{
+			case START_END:
+				g_eMode = MODE::INFO;
+				break;
+			case CREATE_BLOCK:
+				g_eMode = MODE::START_END;
+				break;
+			case INFO:
+				g_eMode = MODE::BRESENHAMLINE;
+				break;
+			case BRESENHAMLINE:
+				g_eMode = MODE::CREATE_BLOCK;
+				break;
+			}
 
-            if (isPlay == false)
-            {
-                g_CJump.ClearMap();
-                SetTimer(hWnd, 0, 1000, NULL);
-                isPlay = true;
-            }
-        }
+			InvalidateRect(hWnd, NULL, FALSE);
+		}
 
-        if (GetAsyncKeyState(VK_TAB))
-        {
-            switch (g_eMode)
-            {
-            case START_END:
-                g_eMode = MODE::INFO;
-                break;
-            case CREATE_BLOCK:
-                g_eMode = MODE::START_END;
-                break;
-            case INFO:
-                g_eMode = MODE::CREATE_BLOCK;
-                break;
-            }
-
-            InvalidateRect(hWnd, NULL, FALSE);
-        }
-
-        break;
-    case WM_LBUTTONDOWN:
-        moveX = LOWORD(lParam) / TILE_SIZE;
+		break;
+	case WM_LBUTTONDOWN:
+		moveX = LOWORD(lParam) / TILE_SIZE;
 		moveY = HIWORD(lParam) / TILE_SIZE;
 
 		switch (g_eMode)
@@ -188,113 +200,166 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			g_CJump.CreateBlock(moveX, moveY);
 			break;
 		case INFO:
-
 			g_node = NULL;
 			g_node = g_CJump.FindNode(moveX, moveY);
 			break;
+		case BRESENHAMLINE:		
+			g_SiX = moveX;
+			g_SiY = moveY;
+			break;
 		}
 
-        InvalidateRect(hWnd, NULL, FALSE);
-        break;
+		InvalidateRect(hWnd, NULL, FALSE);
+		break;
 
-    case WM_RBUTTONDOWN:
-        if (g_eMode == MODE::START_END)
-        {
-            moveX = LOWORD(lParam) / TILE_SIZE;
-            moveY = HIWORD(lParam) / TILE_SIZE;
-            g_CJump.CreateEnd(moveX, moveY);
-            InvalidateRect(hWnd, NULL, FALSE);
-        }
-        break;
+	case WM_RBUTTONDOWN:
+		if (g_eMode == MODE::START_END)
+		{
+			moveX = LOWORD(lParam) / TILE_SIZE;
+			moveY = HIWORD(lParam) / TILE_SIZE;
+			g_CJump.CreateEnd(moveX, moveY);
 
-    case WM_LBUTTONUP:
-        g_bIsDrag = false;
-        break;
+		}
+		else if (g_eMode == MODE::BRESENHAMLINE)
+		{
+			g_bIsDrag = true;
+			g_EiX = LOWORD(lParam) / TILE_SIZE;
+			g_EiY = HIWORD(lParam) / TILE_SIZE;
+		}
+		InvalidateRect(hWnd, NULL, FALSE);
 
-    case WM_MOUSEMOVE:
-        if (g_bIsDrag == true)
-        {
-            if (moveX != LOWORD(lParam) / TILE_SIZE || moveY != HIWORD(lParam) / TILE_SIZE)
-            {
-                moveX = LOWORD(lParam) / TILE_SIZE;
-                moveY = HIWORD(lParam) / TILE_SIZE;
+		break;
 
-                g_CJump.CreateDrag(moveX, moveY);
-                InvalidateRect(hWnd, NULL, FALSE);
-            }
-        }
-        break;
-    case WM_PAINT:
-    {
-        PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(hWnd, &ps);
+	case WM_LBUTTONUP:
+		g_bIsDrag = false;
+		break;
+	case WM_RBUTTONUP:
+		g_bIsDrag = false;
+		break;
 
-        PatBlt(g_hMemDC, 0, 0, Rect.right, Rect.bottom, WHITENESS);
+	case WM_MOUSEMOVE:
+		if (g_bIsDrag == true)
+		{
+			if (g_eMode == MODE::CREATE_BLOCK)
+			{
+				if (moveX != LOWORD(lParam) / TILE_SIZE || moveY != HIWORD(lParam) / TILE_SIZE)
+				{
+					moveX = LOWORD(lParam) / TILE_SIZE;
+					moveY = HIWORD(lParam) / TILE_SIZE;
 
-        g_CJump.Draw(g_hMemDC);
-        g_CJump.DrawLine(g_hMemDC);
+					g_CJump.CreateDrag(moveX, moveY);
 
+				}
+			}
+			else if (g_eMode == MODE::BRESENHAMLINE)
+			{
+				g_EiX = LOWORD(lParam) / TILE_SIZE;
+				g_EiY = HIWORD(lParam) / TILE_SIZE;
+			}
 
-        TextOut(g_hMemDC, 1025, 20, L"모드변환키 : Tab", 11);
+			InvalidateRect(hWnd, NULL, FALSE);
+		}
 
-        TextOut(g_hMemDC, 1025, 0, L"모드 : ", 5);
+		
 
-        TextOut(g_hMemDC, 1025, 40, L"탐색 : Space ", 11);
+		break;
+	case WM_PAINT:
+	{
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hWnd, &ps);
 
-        if (g_eMode == MODE::CREATE_BLOCK)
-        {
-            TextOut(g_hMemDC, 1070, 0, L"블럭생성", 4);
-            TextOut(g_hMemDC, 1025, 60, L"L 클릭 : 블럭생성", 11);
-        }
-        else if (g_eMode == MODE::START_END)
-        {
-            TextOut(g_hMemDC, 1070, 0, L"Start/End", 9);
-            TextOut(g_hMemDC, 1025, 60, L"L 클릭 : 시작지점", 11);
-            TextOut(g_hMemDC, 1025, 80, L"R 클릭 : 도착지점", 11);
-        }
-        else if(g_eMode == MODE::INFO)
-        {
-            TextOut(g_hMemDC, 1070, 0, L"Info", 4);
-            TextOut(g_hMemDC, 1025, 60, L"L 클릭 : 블럭정보", 11);
+		PatBlt(g_hMemDC, 0, 0, Rect.right, Rect.bottom, WHITENESS);
 
-
-            if (g_node != NULL)
-            {
-                WCHAR info[20];
-
-                swprintf_s(info, L"X = %d", g_node->iX);
-                TextOut(g_hMemDC, 1025, 80, info, lstrlenW(info));
-
-                swprintf_s(info, L"Y = %d", g_node->iY);
-                TextOut(g_hMemDC, 1025, 100, info, lstrlenW(info));
+		g_CJump.Draw(g_hMemDC);
+		g_CJump.DrawLine(g_hMemDC);
 
 
-                swprintf_s(info, L"G = %f", g_node->fG);
-                TextOut(g_hMemDC, 1025, 120, info, lstrlenW(info));
+		TextOut(g_hMemDC, 1025, 20, L"모드변환키 : Tab", 11);
 
-                swprintf_s(info, L"H = %f", g_node->fH);
-                TextOut(g_hMemDC, 1025, 140, info, lstrlenW(info));
+		TextOut(g_hMemDC, 1025, 0, L"모드 : ", 5);
 
-                swprintf_s(info, L"F = %f", g_node->fF);
-                TextOut(g_hMemDC, 1025, 160, info, lstrlenW(info));
-            }
-        }
+		TextOut(g_hMemDC, 1025, 40, L"탐색 : Space ", 11);
 
-        BitBlt(hdc, 0, 0, Rect.right, Rect.bottom, g_hMemDC, 0, 0, SRCCOPY);
+		if (g_eMode == MODE::CREATE_BLOCK)
+		{
+			TextOut(g_hMemDC, 1070, 0, L"블럭생성", 4);
+			TextOut(g_hMemDC, 1025, 60, L"L 클릭 : 블럭생성", 11);
+		}
+		else if (g_eMode == MODE::START_END)
+		{
+			TextOut(g_hMemDC, 1070, 0, L"Start/End", 9);
+			TextOut(g_hMemDC, 1025, 60, L"L 클릭 : 시작지점", 11);
+			TextOut(g_hMemDC, 1025, 80, L"R 클릭 : 도착지점", 11);
+		}
+		else if (g_eMode == MODE::INFO)
+		{
+			TextOut(g_hMemDC, 1070, 0, L"Info", 4);
+			TextOut(g_hMemDC, 1025, 60, L"L 클릭 : 블럭정보", 11);
 
-        EndPaint(hWnd, &ps);
-    }
-    break;
 
-    case WM_DESTROY:
-        SelectObject(g_hMemDC, g_hMemBitmapOld);
-        DeleteObject(g_hMemBitmap);
-        DeleteObject(g_hMemDC);
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;
+			if (g_node != NULL)
+			{
+				WCHAR info[20];
+
+				swprintf_s(info, L"X = %d", g_node->iX);
+				TextOut(g_hMemDC, 1025, 80, info, lstrlenW(info));
+
+				swprintf_s(info, L"Y = %d", g_node->iY);
+				TextOut(g_hMemDC, 1025, 100, info, lstrlenW(info));
+
+
+				swprintf_s(info, L"G = %f", g_node->fG);
+				TextOut(g_hMemDC, 1025, 120, info, lstrlenW(info));
+
+				swprintf_s(info, L"H = %f", g_node->fH);
+				TextOut(g_hMemDC, 1025, 140, info, lstrlenW(info));
+
+				swprintf_s(info, L"F = %f", g_node->fF);
+				TextOut(g_hMemDC, 1025, 160, info, lstrlenW(info));
+			}
+		}
+		else if (g_eMode == MODE::BRESENHAMLINE)
+		{
+			TextOut(g_hMemDC, 1070, 0, L"BRESENHAMLINE", 9);
+			TextOut(g_hMemDC, 1025, 60, L"L 클릭 : 시작지점", 11);
+			TextOut(g_hMemDC, 1025, 80, L"R 클릭 : 도착지점", 11);
+
+			list<stPOINT*> pointList;
+			testLine.SerachBresenhamLine(&pointList, g_SiX, g_SiY, g_EiX, g_EiY);
+
+			std:list<stPOINT*>::iterator iter;
+			HBRUSH hBrush = CreateSolidBrush(RGB(50, 255, 50));
+			HBRUSH hBrushOld = (HBRUSH)SelectObject(g_hMemDC, hBrush);
+			for (iter = pointList.begin(); iter != pointList.end(); ++iter)
+			{
+				Rectangle(g_hMemDC, (*iter)->iX* TILE_SIZE + 7, (*iter)->iY * TILE_SIZE + 2,((*iter)->iX * TILE_SIZE + 5) + TILE_SIZE, ((*iter)->iY* TILE_SIZE) + TILE_SIZE);
+			}
+
+			SelectObject(g_hMemDC, hBrushOld);
+			DeleteObject(hBrush);
+
+			HPEN hPenOld = (HPEN)SelectObject(g_hMemDC, hPen);
+			MoveToEx(g_hMemDC, (g_SiX * TILE_SIZE + 7) + (TILE_SIZE / 2), (g_SiY* TILE_SIZE) + (TILE_SIZE / 2), NULL);
+			LineTo(g_hMemDC, (g_EiX* TILE_SIZE + 7) + (TILE_SIZE / 2), (g_EiY* TILE_SIZE) + (TILE_SIZE / 2));
+
+			SelectObject(g_hMemDC, hPenOld);
+		}
+
+		BitBlt(hdc, 0, 0, Rect.right, Rect.bottom, g_hMemDC, 0, 0, SRCCOPY);
+
+		EndPaint(hWnd, &ps);
+	}
+	break;
+
+	case WM_DESTROY:
+		SelectObject(g_hMemDC, g_hMemBitmapOld);
+		DeleteObject(g_hMemBitmap);
+		DeleteObject(g_hMemDC);
+		PostQuitMessage(0);
+		break;
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+	return 0;
 }
 
